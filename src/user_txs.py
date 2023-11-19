@@ -64,7 +64,7 @@ def main():
     batch_size = 10000
 
     try:
-        for item in collection.find(query, projection).batch_size(batch_size):
+        for item in collection.find(query).batch_size(batch_size):
             block_timestamp = item["block_timestamp"]
             block_id        = item["_id"]
             from_address    = item["from_address"]
