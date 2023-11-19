@@ -35,15 +35,15 @@ def main():
     }
 
     projection = {
-        "_id": 1,
-        "block_timestamp": 1,
-        "from_address": 1,
-        "to_address": 1,
-        "value": 1,
-        "gas": 1,
-        "gas_price": 1,
-        "related_addresses": 1,
-        "transaction_type": 1
+        # "_id": 1,
+        # "block_timestamp": 1,
+        # "from_address": 1,
+        # "to_address": 1,
+        # "value": 1,
+        # "gas": 1,
+        # "gas_price": 1,
+        # "related_addresses": 1,
+        # "transaction_type": 1
     }
 
     with open("./data/participants.json", encoding="utf-8") as f:
