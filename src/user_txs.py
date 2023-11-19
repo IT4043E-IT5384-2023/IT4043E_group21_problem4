@@ -5,7 +5,6 @@ import pytz
 from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv())
 from datetime import datetime
-from argparse import ArgumentParser
 
 import pymongo
 
@@ -17,7 +16,7 @@ TIME_ZONE = pytz.timezone("Asia/Ho_Chi_Minh")
 logger = logging.getLogger("user_transactions")
 
 
-def main(args):
+def main():
     MONGO_CONNECTION_URL = os.getenv("MONGO_CONNECTION_URL")
     assert MONGO_CONNECTION_URL is not None
     mongo_client = pymongo.MongoClient(MONGO_CONNECTION_URL)
@@ -27,6 +26,13 @@ def main(args):
 
     start_timestamp = int(datetime(2023, 8, 15, 0, 0, 0, tzinfo=TIME_ZONE).timestamp())
     end_timestamp   = int(datetime(2023, 11, 15, 0, 0, 0, tzinfo=TIME_ZONE).timestamp())
+
+    query = {
+        "block_timestamp": {
+            "$gte": start_timestamp, 
+            "$lte": end_timestamp
+        }
+    }
 
     projection = {
         "_id": 1,
@@ -56,32 +62,23 @@ def main(args):
     builder = IndexedDatasetBuilder(data_path)
 
     batch_size = 10000
-    global_step = args.global_step
-    log_step = 5000
 
     try:
-        for item in collection.find({}, projection).sort("block_timestamp", pymongo.DESCENDING).batch_size(batch_size):
-            global_step += 1
+        for item in collection.find(query, projection).batch_size(batch_size):
             block_timestamp = item["block_timestamp"]
-            block_id = item["_id"]
+            block_id        = item["_id"]
+            from_address    = item["from_address"]
+            to_address      = item["to_address"]
 
-            if global_step % log_step == 0:
-                logger.info("Global_step: %d | Block timestamp: current = %d; start = %d; end = %d", 
-                            global_step, block_timestamp, start_timestamp, end_timestamp)
-
-            if block_timestamp < start_timestamp:
-                break
-
-            if block_timestamp <= end_timestamp:
-                from_address = item["from_address"]
-                to_address = item["to_address"]
-                if from_address in users or to_address in users:
-                    logger.info("Global_step: %d | Fetch block id %s at timestamp %d", global_step, block_id, block_timestamp)
-                    builder.add_item(item)
+            if from_address in users or to_address in users:
+                logger.info("Fetch block id %s at timestamp %d", block_id, block_timestamp)
+                builder.add_item(item)
 
     except KeyboardInterrupt:
         logger.error("KeyboardInterrupt at block timestamp %d", block_timestamp)
-
+    except:
+        logger.exception("Error")
+        
     builder.finalize()
     logger.info("Finish")
 
@@ -93,8 +90,5 @@ def view():
 
 if __name__ == "__main__":
     setup_logging(log_dir="outputs/logs/user_txs", include_time=True)
-    parser = ArgumentParser()
-    parser.add_argument("--global-step", type=int, default=0)
-    args = parser.parse_args()
-    main(args)
+    main()
     view()
