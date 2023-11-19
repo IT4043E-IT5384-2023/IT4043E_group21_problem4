@@ -1,0 +1,9 @@
+# selenium
+# webdriver_manager
+# beautifulsoup4
+pymongo
+psycopg2
+pandas
+coloredlogs
+pendulum
+python-dotenv

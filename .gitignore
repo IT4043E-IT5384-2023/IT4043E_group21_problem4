@@ -2,6 +2,8 @@
 __pycache__/
 *.py[cod]
 *$py.class
+driver
+outputs
 
 # C extensions
 *.so
@@ -24,6 +26,9 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+*.data
+*.idx
+**/knowledge_graph.projects.json
 
 # Installer logs
 pip-log.txt
@@ -48,7 +53,6 @@ storage/.env
 .venv
 venv/
 ENV/
-data
 quick_run/data
 .idea
 .data
