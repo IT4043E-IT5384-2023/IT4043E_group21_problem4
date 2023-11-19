@@ -5,6 +5,7 @@ import pytz
 from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv())
 from datetime import datetime
+from argparse import ArgumentParser
 
 import pymongo
 
@@ -16,7 +17,7 @@ TIME_ZONE = pytz.timezone("Asia/Ho_Chi_Minh")
 logger = logging.getLogger("user_transactions")
 
 
-def main():
+def main(args):
     MONGO_CONNECTION_URL = os.getenv("MONGO_CONNECTION_URL")
     assert MONGO_CONNECTION_URL is not None
     mongo_client = pymongo.MongoClient(MONGO_CONNECTION_URL)
@@ -24,17 +25,19 @@ def main():
     db = mongo_client.get_database("ethereum_blockchain_etl")
     collection = db.get_collection("transactions")
 
-    start_timestamp = int(datetime(2023, 8, 15, 0, 0, 0, tzinfo=TIME_ZONE).timestamp())
-    end_timestamp   = int(datetime(2023, 11, 15, 0, 0, 0, tzinfo=TIME_ZONE).timestamp())
+    start_date  = [int(d) for d in args.start_date.split("/")][::-1]
+    end_date    = [int(d) for d in args.end_date.split("/")][::-1]
+    start_date  = datetime(*start_date, 0, 0, 0, tzinfo=TIME_ZONE)
+    end_date    = datetime(*end_date, 0, 0, 0, tzinfo=TIME_ZONE)
 
     query = {
         "block_timestamp": {
-            "$gte": start_timestamp, 
-            "$lte": end_timestamp
+            "$gte": int(start_date.timestamp()), 
+            "$lte": int(end_date.timestamp())
         }
     }
 
-    projection = {
+    # projection = {
         # "_id": 1,
         # "block_timestamp": 1,
         # "from_address": 1,
@@ -44,7 +47,7 @@ def main():
         # "gas_price": 1,
         # "related_addresses": 1,
         # "transaction_type": 1
-    }
+    # }
 
     with open("./data/participants.json", encoding="utf-8") as f:
         participants = json.load(f)
@@ -57,7 +60,7 @@ def main():
     all_users = set(all_users)
 
 
-    logger.info("Collect user transactions from timestamp %d to %d", start_timestamp, end_timestamp)
+    logger.info("Collect user transactions from %s to %s", str(start_date), str(end_date))
     data_path = "./data/user_txs"
     builder = IndexedDatasetBuilder(data_path)
 
@@ -91,5 +94,9 @@ def view():
 
 if __name__ == "__main__":
     setup_logging(log_dir="outputs/logs/user_txs", include_time=True)
-    main()
+    parser = ArgumentParser()
+    parser.add_argument("-s", "--start-date", type=str, default="15/08/2023")
+    parser.add_argument("-e", "--end-date", type=str, default="15/11/2023")
+    args = parser.parse_args()
+    main(args)
     view()
