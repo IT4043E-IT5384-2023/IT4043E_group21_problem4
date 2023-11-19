@@ -5,6 +5,7 @@ import pytz
 from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv())
 from datetime import datetime
+from argparse import ArgumentParser
 
 import pymongo
 
@@ -16,7 +17,7 @@ TIME_ZONE = pytz.timezone("Asia/Ho_Chi_Minh")
 logger = logging.getLogger("user_transactions")
 
 
-def main():
+def main(args):
     MONGO_CONNECTION_URL = os.getenv("MONGO_CONNECTION_URL")
     assert MONGO_CONNECTION_URL is not None
     mongo_client = pymongo.MongoClient(MONGO_CONNECTION_URL)
@@ -55,7 +56,7 @@ def main():
     builder = IndexedDatasetBuilder(data_path)
 
     batch_size = 10000
-    global_step = 0
+    global_step = args.global_step
     log_step = 5000
 
     try:
@@ -92,5 +93,8 @@ def view():
 
 if __name__ == "__main__":
     setup_logging(log_dir="outputs/logs/user_txs", include_time=True)
-    main()
+    parser = ArgumentParser()
+    parser.add_argument("--global-step", type=int, default=0)
+    args = parser.parse_args()
+    main(args)
     view()
