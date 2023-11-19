@@ -64,3 +64,5 @@ def query_user_lending_events():
             json.dump(data_dict, json_file)
 
         print(f'Dictionary saved to {file_path}')
+
+query_user_lending_events()

@@ -9,6 +9,7 @@ df = pd.DataFrame(kg).explode("deployedChains")
 
 top_5_project = ['ens', 'cryptokitties', 'sandbox', 'otherdeed', 'clonex']
 
+top_5_project_df = df[df["id"].isin(top_5_project)][['id','contract_addresses','deployedChains']].iloc[1:6,]
 
 # Connect to MongoDB
 client = MongoClient('mongodb://etlReaderAnalysis:etl_reader_analysis__Gr2rEVBXyPWzIrP@34.126.84.83:27017,34.142.204.61:27017,34.142.219.60:27017/')
