@@ -48,7 +48,7 @@ storage/.env
 .venv
 venv/
 ENV/
-data
+data/
 quick_run/data
 .idea
 .data

@@ -77,7 +77,7 @@ def main():
 
     logger.info("Number of collected project: %d", len(projects))
 
-    with open("projects.json", "w", encoding="utf-8") as f:
+    with open("./data/projects.json", "w", encoding="utf-8") as f:
         json.dump(projects, f, indent=4)
 
 
