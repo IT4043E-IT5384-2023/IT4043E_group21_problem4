@@ -86,6 +86,7 @@ def main():
 def view():
     data = IndexedDataset("./data/user_txs.data")
     print(len(data))
+    print(data[0])
 
 
 if __name__ == "__main__":
