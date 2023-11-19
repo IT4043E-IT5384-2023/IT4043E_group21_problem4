@@ -2,7 +2,7 @@
 # webdriver_manager
 # beautifulsoup4
 pymongo
-psycopg2
+psycopg2-binary
 pandas
 coloredlogs
 pendulum
