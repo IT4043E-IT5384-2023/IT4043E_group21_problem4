@@ -65,20 +65,23 @@ def main(args):
     builder = IndexedDatasetBuilder(data_path, flush_seconds=args.flush_seconds)
 
     batch_size = 10000
+    global_step = 0
 
     try:
-        for item in collection.find(query).batch_size(batch_size):
+        for item in collection.find(query).skip(global_step).batch_size(batch_size):
             block_timestamp = item["block_timestamp"]
             block_id        = item["_id"]
             from_address    = item["from_address"]
             to_address      = item["to_address"]
 
             if from_address in users or to_address in users:
-                logger.info("Fetch block id %s at timestamp %d", block_id, block_timestamp)
+                logger.info("Step: %d | Fetch block id %s at timestamp %d", global_step, block_id, block_timestamp)
                 builder.add_item(item)
             
             if builder.auto_flush():
                 logger.info("Flush data to disk")
+                
+            global_step    += 1
             
     except KeyboardInterrupt:
         logger.error("KeyboardInterrupt at block timestamp %d", block_timestamp)
