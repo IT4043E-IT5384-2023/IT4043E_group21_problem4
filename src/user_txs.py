@@ -1,7 +1,7 @@
 import os
 import json
-import logging
 import pytz
+import logging
 from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv())
 from datetime import datetime
@@ -62,7 +62,7 @@ def main(args):
 
     logger.info("Collect user transactions from %s to %s", str(start_date), str(end_date))
     data_path = "./data/user_txs"
-    builder = IndexedDatasetBuilder(data_path)
+    builder = IndexedDatasetBuilder(data_path, flush_seconds=args.flush_seconds)
 
     batch_size = 10000
 
@@ -76,7 +76,10 @@ def main(args):
             if from_address in users or to_address in users:
                 logger.info("Fetch block id %s at timestamp %d", block_id, block_timestamp)
                 builder.add_item(item)
-
+            
+            if builder.auto_flush():
+                logger.info("Flush data to disk")
+            
     except KeyboardInterrupt:
         logger.error("KeyboardInterrupt at block timestamp %d", block_timestamp)
     except:
@@ -90,6 +93,7 @@ def view():
     data = IndexedDataset("./data/user_txs.data")
     print(len(data))
     print(data[0])
+    print(data[len(data) - 1])
 
 
 if __name__ == "__main__":
@@ -97,6 +101,7 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("-s", "--start-date", type=str, default="15/08/2023")
     parser.add_argument("-e", "--end-date", type=str, default="15/11/2023")
+    parser.add_argument("--flush-seconds", type=int, default=None)
     args = parser.parse_args()
     main(args)
     view()

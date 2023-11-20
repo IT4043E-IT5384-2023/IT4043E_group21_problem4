@@ -1,5 +1,6 @@
-import pickle
 import os
+import time
+import pickle
 from copy import deepcopy
 
 import numpy as np
@@ -12,14 +13,14 @@ class IndexedDataset:
         self.data_file      = None
         if path.endswith(".data") or path.endswith(".idx"):
             path = os.path.splitext(path)[0]
-        self.data_offsets   = np.load(f"{path}.idx", allow_pickle=True).item()['offsets']
-        self.data_file      = open(f"{path}.data", 'rb', buffering=-1)
+        self.data_offsets   = np.load(f"{path}.idx", allow_pickle=True).item()["offsets"]
+        self.data_file      = open(f"{path}.data", "rb", buffering=-1)
         self.cache          = []
         self.num_cache      = num_cache
 
     def check_index(self, i):
         if i < 0 or i >= len(self.data_offsets) - 1:
-            raise IndexError('index out of range')
+            raise IndexError("index out of range")
 
     def __del__(self):
         if self.data_file:
@@ -56,12 +57,14 @@ class IndexedDataset:
 
 
 class IndexedDatasetBuilder:
-    def __init__(self, path):
+    def __init__(self, path, flush_seconds: int=None):
         if path.endswith(".data") or path.endswith(".idx"):
             path = os.path.splitext(path)[0]
         self.path = path
-        self.out_file = open(f"{path}.data", 'wb')
+        self.out_file = open(f"{path}.data", "wb")
         self.byte_offsets = [0]
+        self.flush_seconds = flush_seconds
+        self.__start_time = time.time()
 
     def add_item(self, item):
         s = pickle.dumps(item)
@@ -70,5 +73,17 @@ class IndexedDatasetBuilder:
 
     def finalize(self):
         self.out_file.close()
-        np.save(open(f"{self.path}.idx", 'wb'), {'offsets': self.byte_offsets})
+        np.save(open(f"{self.path}.idx", "wb"), {"offsets": self.byte_offsets})
 
+    def flush(self):
+        self.finalize()
+        self.out_file = open(f"{self.path}.data", "ab")
+
+    def auto_flush(self) -> bool:
+        now = time.time()
+        if self.flush_seconds is not None and now - self.__start_time >= self.flush_seconds:
+            self.flush()
+            self.__start_time = now
+            return True
+        return False
+    
