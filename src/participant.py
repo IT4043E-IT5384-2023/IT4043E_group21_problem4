@@ -43,7 +43,7 @@ for i in range(3,4):
     print("Done with row " + str(i))
 
 # Specify the file path
-file_path = "./data/participants21212112.json"
+file_path = "./data/parti_sample.json"
 
 # Save the dictionary to a JSON file
 with open(file_path, 'w') as json_file:
