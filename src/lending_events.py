@@ -153,6 +153,7 @@ if __name__ == "__main__":
     for project, users in participants.items():
         logger.info("Number of users in project '%s' = %d", project, len(users))
         user_addresses += users
+    user_addresses = list(set(user_addresses))
 
     # -- Start tasks
     task = GetLendingEvents(
