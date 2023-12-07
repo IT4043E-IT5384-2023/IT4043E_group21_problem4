@@ -110,6 +110,7 @@ class GetLendingEvents(BaseJob):
         super()._end()
 
         df = pd.concat(self.results, ignore_index=True)
+        os.makedirs(os.path.dirname(os.path.abspath(self.output_path)), exist_ok=True)
         df.to_csv(self.output_path)
 
 
