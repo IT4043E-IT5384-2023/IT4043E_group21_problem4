@@ -81,13 +81,14 @@ class QueryLendingEvents:
 
 
 class GetLendingEvents(BaseJob):
-    def __init__(self, collection, user_addresses: list[str], event_type: str, output_path: str, max_workers=4, batch_size=2500):
+    def __init__(self, collection, user_addresses: list[str], event_type: str, output_path: str, max_workers=4, batch_size=2500, verbose: bool=False):
         super().__init__(work_iterable=user_addresses, max_workers=max_workers, batch_size=batch_size)
 
         self.collection = collection
         self.output_path = output_path
         self.event_type = event_type.lower()
         self.results = []
+        self.verbose = verbose
 
     def _execute_batch(self, works: list[str]):
         r"""
@@ -103,6 +104,8 @@ class GetLendingEvents(BaseJob):
         records = []
         for record in records_gen:
             records.append(record)
+            if self.verbose:
+                logger.info(f"Got {len(records)} records")
 
         self.results.append(pd.DataFrame(records))
 
@@ -123,6 +126,7 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--event-type", type=str, required=True)
     parser.add_argument("-b", "--batch-size", type=int, default=2500)
     parser.add_argument("-j", "--max-workers", type=int, default=4)
+    parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
 
     # -- Parser date time
@@ -158,5 +162,6 @@ if __name__ == "__main__":
         output_path=args.output_csv_path, 
         max_workers=args.max_workers, 
         batch_size=args.batch_size,
+        verbose=args.verbose,
     )
     task.run()
