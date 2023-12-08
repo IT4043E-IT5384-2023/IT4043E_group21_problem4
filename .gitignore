@@ -1,6 +1,9 @@
 knowledge_graph.projects.json
 outputs
 driver
+notebooks
+data/lending_events
+test*.*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -17,3 +17,18 @@ Step query:
     - Run participant.py
 - Next we get all transaction/event lending/ transfer on each user address:
     - Run user_lending.py/user_transaction.py/user_transfer.py
+
+
+## Lending events
+### Dependencies
+Prepare file `participants.json` at directory `data`
+
+### Crawling process
+```bash
+python ./src/lending_events/crawler.py -o ./data/lending_events/raw/repay.py -t repay -j 4
+```
+
+### ETL process
+```bash
+python ./src/lending_events/etl.py
+```

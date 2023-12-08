@@ -4,14 +4,13 @@ import logging
 import pytz
 from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv())
-# from datetime import datetime
-from argparse import ArgumentParser
+import hashlib
+from datetime import datetime
+import random
 
 import pymongo
 import pandas as pd
 from multithread_processing.base_job import BaseJob
-
-from utils.logger import setup_logging
 
 
 TIME_ZONE = pytz.timezone("Asia/Ho_Chi_Minh")
@@ -24,6 +23,12 @@ class QueryLendingEvents:
         if hasattr(cls, event_type) is False:
             raise ValueError(f"Event type {event_type} not found")
         return getattr(cls, event_type)(users)
+    
+    @classmethod
+    def get_user_column_name(cls, event_type: str):
+        keys = [k for k in cls.get_query(event_type, None).keys() if k != "event_type"]
+        assert len(keys) == 1
+        return keys[0]
     
     @classmethod
     def borrow(cls, users: list[str]):
@@ -81,14 +86,30 @@ class QueryLendingEvents:
 
 
 class GetLendingEvents(BaseJob):
-    def __init__(self, collection, user_addresses: list[str], event_type: str, output_path: str, max_workers=4, batch_size=2500, verbose: bool=False):
+    def __init__(
+            self, 
+            collection, 
+            user_addresses: list[str], 
+            event_type: str, 
+            output_path: str, 
+            output_single_file: bool=True, 
+            max_workers=4, 
+            batch_size=2500, 
+            verbose: bool=False
+    ):
         super().__init__(work_iterable=user_addresses, max_workers=max_workers, batch_size=batch_size)
 
         self.collection = collection
         self.output_path = output_path
+        self.output_single_file = output_single_file
         self.event_type = event_type.lower()
         self.results = []
         self.verbose = verbose
+
+        if self.output_single_file:
+            os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
+        else:
+            os.makedirs(os.path.abspath(output_path), exist_ok=True)
 
     def _execute_batch(self, works: list[str]):
         r"""
@@ -107,27 +128,47 @@ class GetLendingEvents(BaseJob):
             if self.verbose:
                 logger.info(f"Got {len(records)} records")
 
-        self.results.append(pd.DataFrame(records))
+        df = pd.DataFrame(records)
+        if self.output_single_file:
+            self.results.append(df)
+        else:
+            fn = (str(datetime.now()) + str(random.random())).encode()
+            fn = os.path.join(self.output_path, hashlib.sha256(fn).hexdigest() + ".parquet")
+            df.to_parquet(fn)
 
     def _end(self):
         super()._end()
 
-        df = pd.concat(self.results, ignore_index=True)
-        os.makedirs(os.path.dirname(os.path.abspath(self.output_path)), exist_ok=True)
-        df.to_csv(self.output_path)
+        if self.output_single_file:
+            df = pd.concat(self.results, ignore_index=True)
+            df.to_parquet(self.output_path)
 
 
 if __name__ == "__main__":
+    import sys
+    sys.path.append(os.path.abspath(os.path.join(__file__, "..", "..")))
+    
+    from utils.logger import setup_logging
     setup_logging(log_dir="outputs/logs/user_txs", include_time=True)
+
+    from argparse import ArgumentParser
     parser = ArgumentParser()
+
     # parser.add_argument("-s", "--start-date", type=str, default="15/08/2023")
     # parser.add_argument("-e", "--end-date", type=str, default="15/11/2023")
-    parser.add_argument("-o", "--output-csv-path", type=str, default="data/lending_events.csv")
+    parser.add_argument("-o", "--output-parquet-path", type=str, default=None)
+    parser.add_argument("-d", "--output-directory", type=str, default=None)
     parser.add_argument("-t", "--event-type", type=str, required=True)
     parser.add_argument("-b", "--batch-size", type=int, default=2500)
     parser.add_argument("-j", "--max-workers", type=int, default=4)
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
+
+    if args.output_parquet_path is None and args.output_directory is None:
+        raise ValueError("--output-parquet-path or --output-directory must be provided")
+    
+    if args.output_parquet_path is not None and args.output_directory is not None:
+        raise ValueError("Cannot provide both --output-parquet-path and --output-directory")
 
     # -- Parser date time
     # start_date  = args.start_date
@@ -155,12 +196,20 @@ if __name__ == "__main__":
         user_addresses += users
     user_addresses = list(set(user_addresses))
 
+    if args.output_parquet_path is not None:
+        output_path=args.output_parquet_path
+        output_single_file = True
+    else:
+        output_path=args.output_directory
+        output_single_file = False
+
     # -- Start tasks
     task = GetLendingEvents(
         collection, 
         user_addresses, 
         event_type=args.event_type, 
-        output_path=args.output_csv_path, 
+        output_path=output_path, 
+        output_single_file=output_single_file,
         max_workers=args.max_workers, 
         batch_size=args.batch_size,
         verbose=args.verbose,
