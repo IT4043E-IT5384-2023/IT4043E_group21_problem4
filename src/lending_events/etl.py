@@ -82,6 +82,7 @@ class LendingEvents_ETL_Processor:
 
     def run(self):
         self.user_interact_with_contract_address()
+        self.user_interact_timestamp()
         self.process_volume()
         if self.final:
             logger.info("Finalizing ...")
@@ -90,6 +91,10 @@ class LendingEvents_ETL_Processor:
     def user_interact_with_contract_address(self):
         dc = self.df.groupBy(F.col(self.user_col_name).alias("user"), "contract_address").count()
         self.write(dc, "contract_interaction")
+
+    def user_interact_timestamp(self):
+        dt = self.df.select(F.col(self.user_col_name).alias("user"), "block_timestamp")
+        self.write(dt, "timestamp")
 
     def finalize(self):
         output_dir = os.path.join(self.output_dir, "contract_interaction")
@@ -161,3 +166,7 @@ if __name__ == "__main__":
         ).run()
 
     spark.stop()
+
+
+# -- To group table timestamp by user, use:
+# -- dt = df.groupBy("user").agg(F.collect_list("block_timestamp"))
