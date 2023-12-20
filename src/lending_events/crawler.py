@@ -179,9 +179,9 @@ if __name__ == "__main__":
     # end_date    = datetime(*end_date, 0, 0, 0, tzinfo=TIME_ZONE)
 
     # -- Init mongo database connection
-    MONGO_CONNECTION_URL = os.getenv("MONGO_CONNECTION_URL")
-    assert MONGO_CONNECTION_URL is not None
-    mongo_client = pymongo.MongoClient(MONGO_CONNECTION_URL)
+    MONGO_RAW_CONNECTION_URL = os.getenv("MONGO_RAW_CONNECTION_URL")
+    assert MONGO_RAW_CONNECTION_URL is not None
+    mongo_client = pymongo.MongoClient(MONGO_RAW_CONNECTION_URL)
 
     db = mongo_client.get_database("ethereum_blockchain_etl")
     collection = db.get_collection("lending_events")
@@ -196,6 +196,7 @@ if __name__ == "__main__":
         user_addresses += users
     user_addresses = list(set(user_addresses))
 
+    # -- Set up output path
     if args.output_parquet_path is not None:
         output_path=args.output_parquet_path
         output_single_file = True

@@ -11,10 +11,10 @@ TIME_ZONE = pytz.timezone("Asia/Ho_Chi_Minh")
 
 
 def main():
-    MONGO_CONNECTION_URL = os.getenv("MONGO_CONNECTION_URL")
-    MONGO_CONNECTION_URL="mongodb://etlReaderAnalysis:etl_reader_analysis__Gr2rEVBXyPWzIrP@34.126.84.83:27017,34.142.204.61:27017,34.142.219.60:27017/"
-    assert MONGO_CONNECTION_URL is not None
-    mongo_client = pymongo.MongoClient(MONGO_CONNECTION_URL)
+    MONGO_RAW_CONNECTION_URL = os.getenv("MONGO_RAW_CONNECTION_URL")
+    MONGO_RAW_CONNECTION_URL="mongodb://etlReaderAnalysis:etl_reader_analysis__Gr2rEVBXyPWzIrP@34.126.84.83:27017,34.142.204.61:27017,34.142.219.60:27017/"
+    assert MONGO_RAW_CONNECTION_URL is not None
+    mongo_client = pymongo.MongoClient(MONGO_RAW_CONNECTION_URL)
 
     db = mongo_client.get_database("ethereum_blockchain_etl")
     collection = db.get_collection("transactions")

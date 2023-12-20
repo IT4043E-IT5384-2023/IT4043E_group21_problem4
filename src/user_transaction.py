@@ -18,9 +18,9 @@ logger = logging.getLogger("user_transactions")
 
 
 def main(args):
-    MONGO_CONNECTION_URL = os.getenv("MONGO_CONNECTION_URL")
-    assert MONGO_CONNECTION_URL is not None
-    mongo_client = pymongo.MongoClient(MONGO_CONNECTION_URL)
+    MONGO_RAW_CONNECTION_URL = os.getenv("MONGO_RAW_CONNECTION_URL")
+    assert MONGO_RAW_CONNECTION_URL is not None
+    mongo_client = pymongo.MongoClient(MONGO_RAW_CONNECTION_URL)
 
     db = mongo_client.get_database("ethereum_blockchain_etl")
     collection = db.get_collection("transactions")
