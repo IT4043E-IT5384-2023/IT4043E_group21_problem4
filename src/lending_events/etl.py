@@ -132,7 +132,7 @@ class LendingEvents_ETL_Processor:
 
     def repay_volume(self):
         assert self.event_type.lower() == "repay"
-        self._volume(self.df, "reserve", "amount", "receiving")
+        self._volume(self.df, "reserve", "amount", "sending")
 
     def withdraw_volume(self):
         assert self.event_type.lower() == "withdraw"
